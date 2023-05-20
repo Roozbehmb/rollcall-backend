@@ -11,9 +11,28 @@ class Traffic extends Model
 
     protected $guarded = [];
     protected $table = 'traffics';
+
     public function get_user()
     {
-        return $this->hasOne(User::class, 'id', 'user_id');
+        return $this->hasOne(User::class, 'id', 'id_user');
     }
 
+    public function get_absents()
+    {
+        return $this->hasOne(Absence::class, 'id', 'id_absents');
+    }
+
+    public function get_substitute()
+    {
+        return $this->hasOne(ShiftDailie::class, 'id', 'id_substitute');
+    }
+
+    public function get_mission()
+    {
+        return $this->hasOne(Mission::class, 'id', 'id_mission');
+    }
+    public function get_day()
+    {
+        return $this->hasOne(DayWeek::class, 'id', 'id_day');
+    }
 }

@@ -22,7 +22,6 @@ return new class extends Migration
 
             $table->time('watch_enter_time')->nullable();
             $table->time('watch_exit_time')->nullable();
-            $table->time('watch_rest_time')->nullable();
             $table->time('watch_second_enter_time')->nullable();
             $table->time('watch_second_exit_time')->nullable();
             $table->time('watch_duration_of_attendance')->nullable();

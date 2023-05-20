@@ -19,10 +19,10 @@ class absenceRequest extends FormRequest
     public function rules()
     {
         return [
-            'title_absence' => 'required',
+            'title' => 'required',
+            'description' => 'required',
             'id_type_absence' => 'required|numeric',
-            'time_limitation_request' => 'required|numeric',
-
+            'time_limitation_request' => 'required',
         ];
     }
 

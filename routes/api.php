@@ -115,7 +115,16 @@ Route::group(['middleware' => 'auth:api'], function () {
         Route::put('workterm/{id}', 'update');
         Route::delete('workterm/{id}', 'destroy');
     });
-
+    Route::controller(\App\Http\Controllers\FunctionalDescriptionController::class)->group(function () {
+        Route::get('functionalDescription/{id}', 'show');
+    });
+    Route::controller(\App\Http\Controllers\AssignMissionController::class)->group(function () {
+        Route::get('assignMission', 'index');
+        Route::get('assignMission/{id}', 'show');
+        Route::post('assignMission', 'store');
+        Route::put('assignMission/{id}', 'update');
+        Route::delete('assignMission/{id}', 'destroy');
+    });
 });
 
 

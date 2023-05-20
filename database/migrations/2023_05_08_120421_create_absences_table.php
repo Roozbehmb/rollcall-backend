@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('absences', function (Blueprint $table) {
             $table->id();
-            $table->string('title_absence');
+            $table->string('title');
             $table->unsignedBigInteger('id_type_absence');
             $table->foreign('id_type_absence')->on('type_absences')->references('id');
             $table->mediumText('description');

@@ -6,22 +6,34 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class TrafficRequest extends FormRequest
+class AssignMissionRequest extends FormRequest
 {
-
+    /**
+     * Determine if the user is authorized to make this request.
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
+     */
     public function rules(): array
     {
         return [
-            'enter_time' => 'required',
-            'exit_time' => 'required'
+            'id_mission'=>'required|numeric',
+            'id_user'=>'required|numeric',
+            'start_time'=>'required',
+            'end_time'=>'required',
+            'date'=>'required',
+            'description'=>'required|string',
+
+
         ];
     }
-
     public function failedValidation(Validator $validator)
 
     {

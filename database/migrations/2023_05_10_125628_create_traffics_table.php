@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('traffics', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('id_user');
+            $table->unsignedBigInteger('id_shift');
             $table->unsignedBigInteger('id_absents')->nullable();
             $table->unsignedBigInteger('id_substitute')->nullable();
             $table->unsignedBigInteger('id_mission')->nullable();

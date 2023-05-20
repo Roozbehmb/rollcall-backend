@@ -6,6 +6,7 @@ use App\Http\Requests\TrafficRequest;
 use App\Models\Absence;
 use App\Models\Mission;
 use App\Models\Month;
+use App\Models\ShiftEmployee;
 use App\Models\traffic;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -46,15 +47,18 @@ class TrafficController extends Controller
 
     }
 
-    public function update(TrafficRequest $request, $id)
+    public function update(Request $request, $id)
     {
         try {
             $traffic = $request->all();
-            $data = Traffic::find($id);
-            $data->update($traffic);
+            $data = Traffic::where('id_user', $id)->get();
+            foreach ($data as $values) {
+                $values->update($traffic);
+            }
+
             $response = [
                 'success' => true,
-                'data' => Traffic::find($id),
+                'data' => Traffic::where('id_user', $id)->get(),
                 'message' => 'update shifte_Week success'
             ];
             return response()->json($response, Response::HTTP_OK);
@@ -98,31 +102,42 @@ class TrafficController extends Controller
     public function check_time($request)
     {
         $arrayTraffics = [];
-//        return ($request);
-        foreach ($request->id_user as $id_user) {
-            foreach ($request->id_day as $id_day) {
-                $arrayTraffics[] = Traffic::create([
-                    'id_user' => $id_user,
-                    'id_day' => $id_day,
-                    'id_absents' => $request->id_absents,
-                    'id_substitute' => $request->id_substitute,
-                    'id_mission' => $request->id_mission,
-                    'time_day_absents' => $request->time_day_absents,
-                    'description_absents' => $request->description_absents,
-                    'time_day_mission' => $request->time_day_mission,
-                    'description_mission' => $request->description_mission,
-                    'data_mission' => $request->data_mission,
-                    'data_absents' => $request->data_absents,
-                    'start_date' => $request->start_date,
-                    'end_date' => $request->end_date,
-                    'enter_time' => $request->enter_time,
-                    'exit_time' => $request->exit_time,
-                    'active' => $request->active,
+        $idShiftEmployee = ShiftEmployee::where('id_user', $request->id_user)->pluck('id');
 
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+        if (is_array($request->id_user)) {
+            foreach ($request->id_user as $id_user) {
+                if (!empty($request->id_day)) {
+                    foreach ($request->id_day as $id_day) {
+                        $arrayTraffics[] = Traffic::create([
+                            'id_user' => $id_user,
+                            'id_day' => $id_day,
+                            'id_shift' => $idShiftEmployee[0],
+                            'id_absents' => $request->id_absents,
+                            'id_substitute' => $request->id_substitute,
+                            'id_mission' => $request->id_mission,
+                            'time_day_absents' => $request->time_day_absents,
+                            'description_absents' => $request->description_absents,
+                            'time_day_mission' => $request->time_day_mission,
+                            'description_mission' => $request->description_mission,
+                            'data_mission' => $request->data_mission,
+                            'data_absents' => $request->data_absents,
+                            'start_date' => $request->start_date,
+                            'end_date' => $request->end_date,
+                            'enter_time' => $request->enter_time,
+                            'exit_time' => $request->exit_time,
+                            'active' => $request->active,
+
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                } else {
+                    return "empty id_day not array.";
+
+                }
             }
+        } else {
+            return "check";
         }
 
         return $arrayTraffics;
