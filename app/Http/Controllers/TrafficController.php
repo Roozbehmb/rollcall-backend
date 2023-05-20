@@ -102,40 +102,72 @@ class TrafficController extends Controller
     public function check_time($request)
     {
         $arrayTraffics = [];
-        $idShiftEmployee = ShiftEmployee::where('id_user', $request->id_user)->pluck('id');
-
-        if (is_array($request->id_user)) {
-            foreach ($request->id_user as $id_user) {
+        $users = $request->id_user;
+        if (is_array($users)) {
+            foreach ($users as $id_user) {
                 if (!empty($request->id_day)) {
                     foreach ($request->id_day as $id_day) {
-                        $arrayTraffics[] = Traffic::create([
-                            'id_user' => $id_user,
-                            'id_day' => $id_day,
-                            'id_shift' => $idShiftEmployee[0],
-                            'id_absents' => $request->id_absents,
-                            'id_substitute' => $request->id_substitute,
-                            'id_mission' => $request->id_mission,
-                            'time_day_absents' => $request->time_day_absents,
-                            'description_absents' => $request->description_absents,
-                            'time_day_mission' => $request->time_day_mission,
-                            'description_mission' => $request->description_mission,
-                            'data_mission' => $request->data_mission,
-                            'data_absents' => $request->data_absents,
-                            'start_date' => $request->start_date,
-                            'end_date' => $request->end_date,
-                            'enter_time' => $request->enter_time,
-                            'exit_time' => $request->exit_time,
-                            'active' => $request->active,
+                        $idShiftEmployee = ShiftEmployee::where('id_user', $id_user)->pluck('id');
+                        if (!empty($idShiftEmployee)) {
+                            $arrayTraffics[] = Traffic::create([
+                                'id_user' => $id_user,
+                                'id_day' => $id_day,
+                                'id_shift' => $idShiftEmployee[0],
+                                'id_absents' => $request->id_absents,
+                                'id_substitute' => $request->id_substitute,
+                                'id_mission' => $request->id_mission,
+                                'time_day_absents' => $request->time_day_absents,
+                                'description_absents' => $request->description_absents,
+                                'time_day_mission' => $request->time_day_mission,
+                                'description_mission' => $request->description_mission,
+                                'data_mission' => $request->data_mission,
+                                'data_absents' => $request->data_absents,
+                                'start_date' => $request->start_date,
+                                'end_date' => $request->end_date,
+                                'enter_time' => $request->enter_time,
+                                'exit_time' => $request->exit_time,
+                                'active' => $request->active,
 
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        } else {
+                            $response = [
+                                'status' => false,
+                                'msg' => 'No traffic has been recorded for this user yet'
+                            ];
+                            return response()->json($response, Response::HTTP_NOT_FOUND);
+                        }
                     }
                 } else {
-                    return "empty id_day not array.";
+                    $idShiftEmployee = ShiftEmployee::where('id_user', $id_user)->pluck('id');
+                    $arrayTraffics = Traffic::create([
+                        'id_user' => $id_user,
+                        'id_day' => $id_day,
+                        'id_shift' => $idShiftEmployee[0],
+                        'id_absents' => $request->id_absents,
+                        'id_substitute' => $request->id_substitute,
+                        'id_mission' => $request->id_mission,
+                        'time_day_absents' => $request->time_day_absents,
+                        'description_absents' => $request->description_absents,
+                        'time_day_mission' => $request->time_day_mission,
+                        'description_mission' => $request->description_mission,
+                        'data_mission' => $request->data_mission,
+                        'data_absents' => $request->data_absents,
+                        'start_date' => $request->start_date,
+                        'end_date' => $request->end_date,
+                        'enter_time' => $request->enter_time,
+                        'exit_time' => $request->exit_time,
+                        'active' => $request->active,
+
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                    return $arrayTraffics;
 
                 }
             }
+
         } else {
             return "check";
         }
