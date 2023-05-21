@@ -28,7 +28,15 @@ class FunctionalDescriptionController extends Controller
             'get_absents.get_absents_type:id,title',
             'get_substitute',
             'get_mission',
-            'get_day'
+            'get_day',
+            'get_employee.get_absents_default',
+            'get_employee.get_periodic_shift',
+            'get_employee.get_shift_dailies',
+            'get_employee.get_dedicated_shift',
+            'get_employee.get_days',
+
+            'get_employee.get_week_shift'
+
         )
             ->whereBetween('created_at',
                 [

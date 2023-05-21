@@ -10,8 +10,11 @@ class Absence extends Model
     use HasFactory;
 
     protected $guarded = [];
+
     public function get_absents_type()
     {
         return $this->hasOne(TypeAbsence::class, 'id', 'id_type_absence');
     }
+
+
 }

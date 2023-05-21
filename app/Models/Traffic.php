@@ -11,6 +11,7 @@ class Traffic extends Model
 
     protected $guarded = [];
     protected $table = 'traffics';
+//    protected $with = ['get_user'];
 
     public function get_user()
     {
@@ -31,8 +32,16 @@ class Traffic extends Model
     {
         return $this->hasOne(Mission::class, 'id', 'id_mission');
     }
+
     public function get_day()
     {
         return $this->hasOne(DayWeek::class, 'id', 'id_day');
     }
+
+    public function get_employee()
+    {
+        return $this->hasOne(ShiftEmployee::class, 'id', 'id_shift');
+    }
+
+
 }
