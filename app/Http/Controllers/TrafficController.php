@@ -9,6 +9,7 @@ use App\Models\Month;
 use App\Models\ShiftEmployee;
 use App\Models\traffic;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ use Morilog\Jalali\Jalalian;
 use Symfony\Component\HttpFoundation\Response;
 use Exception;
 use App\Lib\Jdf;
+use Illuminate\Database\Query\Builder;
 
 class TrafficController extends Controller
 {
@@ -103,15 +105,54 @@ class TrafficController extends Controller
     {
         $arrayTraffics = [];
         $users = $request->id_user;
-        if (is_array($users)) {
-            foreach ($users as $id_user) {
-                if (!empty($request->id_day)) {
-                    foreach ($request->id_day as $id_day) {
+        $dateSingleTraffic = $request->date_single_traffic;
+        $days = $request->id_day;
+        $startDate = Carbon::parse($request->start_date);
+        $dateToday = Carbon::today();
+        if ($startDate < $dateToday) {
+            if (is_array($request->id_user)) {
+                foreach ($users as $id_user) {
+                    if (is_array($days)) {
+                        foreach ($days as $id_day) {
+                            $idShiftEmployee = ShiftEmployee::where('id_user', $id_user)->get();
+                            if (!empty($idShiftEmployee)) {
+                                $arrayTraffics[] = Traffic::create([
+                                    'id_user' => $id_user,
+                                    'id_day' => $id_day,
+                                    'id_shift' => $idShiftEmployee[0],
+                                    'id_absents' => $request->id_absents,
+                                    'id_substitute' => $request->id_substitute,
+                                    'id_mission' => $request->id_mission,
+                                    'time_day_absents' => $request->time_day_absents,
+                                    'description_absents' => $request->description_absents,
+                                    'time_day_mission' => $request->time_day_mission,
+                                    'description_mission' => $request->description_mission,
+                                    'data_mission' => $request->data_mission,
+                                    'data_absents' => $request->data_absents,
+                                    'start_date' => $request->start_date,
+                                    'end_date' => $request->end_date,
+                                    'enter_time' => $request->enter_time,
+                                    'exit_time' => $request->exit_time,
+                                    'active' => $request->active,
+
+                                    'created_at' => now(),
+                                    'updated_at' => now(),
+                                ]);
+                            } else {
+                                $response = [
+                                    'status' => false,
+                                    'msg' => 'No traffic has been recorded for this user yet'
+                                ];
+                                return response()->json($response, Response::HTTP_NOT_FOUND);
+                            }
+                        }
+
+                    } else {
                         $idShiftEmployee = ShiftEmployee::where('id_user', $id_user)->pluck('id');
                         if (!empty($idShiftEmployee)) {
                             $arrayTraffics[] = Traffic::create([
                                 'id_user' => $id_user,
-                                'id_day' => $id_day,
+                                'id_day' => $request->id_day,
                                 'id_shift' => $idShiftEmployee[0],
                                 'id_absents' => $request->id_absents,
                                 'id_substitute' => $request->id_substitute,
@@ -131,45 +172,45 @@ class TrafficController extends Controller
                                 'created_at' => now(),
                                 'updated_at' => now(),
                             ]);
-                        } else {
-                            $response = [
-                                'status' => false,
-                                'msg' => 'No traffic has been recorded for this user yet'
-                            ];
-                            return response()->json($response, Response::HTTP_NOT_FOUND);
                         }
                     }
-                } else {
-                    $idShiftEmployee = ShiftEmployee::where('id_user', $id_user)->pluck('id');
-                    $arrayTraffics = Traffic::create([
-                        'id_user' => $id_user,
-                        'id_day' => $id_day,
-                        'id_shift' => $idShiftEmployee[0],
-                        'id_absents' => $request->id_absents,
-                        'id_substitute' => $request->id_substitute,
-                        'id_mission' => $request->id_mission,
-                        'time_day_absents' => $request->time_day_absents,
-                        'description_absents' => $request->description_absents,
-                        'time_day_mission' => $request->time_day_mission,
-                        'description_mission' => $request->description_mission,
-                        'data_mission' => $request->data_mission,
-                        'data_absents' => $request->data_absents,
-                        'start_date' => $request->start_date,
-                        'end_date' => $request->end_date,
-                        'enter_time' => $request->enter_time,
-                        'exit_time' => $request->exit_time,
-                        'active' => $request->active,
-
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    return $arrayTraffics;
-
                 }
+
+
+            } else {
+                $idShiftEmployee = ShiftEmployee::where('id_user', $users)->pluck('id');
+                $arrayTraffics = Traffic::create([
+                    'id_user' => $request->id_user,
+                    'id_day' => $request->id_day,
+                    'id_shift' => $idShiftEmployee[0],
+                    'id_absents' => $request->id_absents,
+                    'id_substitute' => $request->id_substitute,
+                    'id_mission' => $request->id_mission,
+                    'time_day_absents' => $request->time_day_absents,
+                    'description_absents' => $request->description_absents,
+                    'time_day_mission' => $request->time_day_mission,
+                    'description_mission' => $request->description_mission,
+                    'data_mission' => $request->data_mission,
+                    'data_absents' => $request->data_absents,
+                    'start_date' => $request->start_date,
+                    'end_date' => $request->start_date,
+                    'enter_time' => $request->enter_time,
+                    'exit_time' => $request->exit_time,
+                    'active' => $request->active,
+                    'date_single_traffic' => $dateSingleTraffic,
+
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                return $arrayTraffics;
             }
 
         } else {
-            return "check";
+            $response = [
+                'status' => false,
+                'msg' => 'Traffic cannot be recorded for the future'
+            ];
+            return response()->json($response, Response::HTTP_NOT_FOUND);
         }
 
         return $arrayTraffics;

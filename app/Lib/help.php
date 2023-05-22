@@ -134,3 +134,43 @@ $mult_traffic->up_to_date = $data_up;
 <!--$ars_exit_time_m = (int)$substrings[1];-->
 <!--$ars_exit_time_d = (int)$substrings[2];-->
 <!--$count_days = ($ars_exit_time_m * 30 + $ars_exit_time_d) - ($ars_m * 30 + $ars_d);-->
+
+//            for ($i = 0; $i < $Days; $i++) {
+//                $watchEnterTime = $date->get_employee->get_shift_dailies[0]->watch_enter_time;
+//                $watchExitTime = $date->get_employee->get_shift_dailies[0]->watch_exit_time;
+//                $to = Carbon::createFromFormat('H:s:i', $watchEnterTime);
+//                $from = Carbon::createFromFormat('H:s:i', $watchExitTime);
+////                $totalDateSingleTraffic = $toDate->diff($fromDate)->format('%H:%I:%S');;
+//                $totalDuration += ($to->diffInSeconds($from));
+//            }
+
+
+
+<!--if (!empty($date['date_single_traffic'])) {-->
+<!--$shiftDailiesDateUp = $date['date_single_traffic'];-->
+<!--$traffic_enter_time = $date['enter_time'];-->
+<!--$traffic_exit_time = $date['exit_time'];-->
+<!--$toDate = Carbon::parse($traffic_enter_time);-->
+<!--$fromDate = Carbon::parse($traffic_exit_time);-->
+<!--$totalSingle += $toDate->diffInSeconds($fromDate);-->
+<!---->
+<!---->
+<!--} else {-->
+<!--}-->
+<!--}-->
+
+
+
+
+<!--$checkShiftDailies = ShiftEmployee::where('shift_dailies_date_up', '<=', $request->start_date)-->
+/////->where('shift_dailies_date_at', '>=', $request->end_date)->exists();
+<!---->
+<!--$checkShiftWeeks = ShiftEmployee::where('week_shifts_date_up', '<=', $request->start_date)-->
+//////where('week_shifts_date_at', '>=', $request->end_date)->exists();-->
+<!---->
+<!--$checkShiftPeriodic = ShiftEmployee::where('periodic_shifts_date_up', '<=', $request->start_date)-->
+/////<!where('periodic_shifts_date_at', '>=', $request->end_date)->exists();-->
+<!---->
+<!---->
+<!--if ($checkShiftDailies || $checkShiftWeeks || $checkShiftPeriodic) {-->
+//            ///    $totalDateSingleTraffic = $toDate->diff($fromDate)->format('%H:%I:%S');;

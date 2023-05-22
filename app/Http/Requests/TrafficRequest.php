@@ -18,7 +18,11 @@ class TrafficRequest extends FormRequest
     {
         return [
             'enter_time' => 'required',
-            'exit_time' => 'required'
+            'exit_time' => 'required',
+            'start_date' => 'required',
+            'id_user' => 'required',
+            'id_day' => 'required',
+            'id_shift' => 'required',
         ];
     }
 
