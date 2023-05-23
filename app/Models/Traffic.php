@@ -11,6 +11,7 @@ class Traffic extends Model
 
     protected $guarded = [];
     protected $table = 'traffics';
+
 //    protected $with = ['get_user'];
 
     public function get_user()

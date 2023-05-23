@@ -12,65 +12,57 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
+use Exception;
 
 
 class FunctionalDescriptionController extends Controller
 {
     protected $arrayEmployee = [];
 
-    public function show(Request $request, $id, Carbon $start)
+    public function show(Request $request, $id)
     {
         $now = Carbon::now();
-        $get_month = $request->month;
-        $startOfMonth = Carbon::create($now->year, $get_month, 1, 0);
+        $getMonth = $request->month;
+        $dataSortMonth = [];
+        $dataTraffic = [];
 
-        $dataMonth = Traffic::where('id_user', $id)->
+        try {
+            $startOfMonth = Carbon::create($now->year, $getMonth, 1, 0);
+            $dataSortMonth = Traffic::where('id_user', $id)->
+            with('get_employee.get_shift_dailies')->whereBetween('created_at',
+                [
+                    $startOfMonth,
+                    Carbon::now()->endOfMonth()
+                ])->get();
+
+        } catch (Exception $error) {
+            return response()->json($error, Response::HTTP_BAD_REQUEST);
+        }
+
+        $startTrafficDate = Carbon::parse($dataSortMonth[0]->get_employee->shift_dailies_date_up);
+        $endTrafficDate = Carbon::parse($dataSortMonth[0]->get_employee->shift_dailies_date_at);
+        $dataTraffic = Traffic::where('id_user', $id)->
         with(
+            'get_user:id,name,email',
+            'get_absents.get_absents_type:id,title',
+            'get_substitute',
+            'get_mission',
+            'get_day',
             'get_employee.get_absents_default',
             'get_employee.get_periodic_shift',
             'get_employee.get_shift_dailies',
             'get_employee.get_dedicated_shift',
             'get_employee.get_days',
             'get_employee.get_week_shift'
-        )->whereBetween('created_at',
+        )->whereBetween('start_date',
             [
-                $startOfMonth,
-                Carbon::now()->endOfMonth()
-            ])->get();
-
-        $enter_time=$dataMonth[0]->get_employee->get_shift_dailies[0]->watch_enter_time;
-        $exit_time=$dataMonth[0]->get_employee->get_shift_dailies[0]->watch_exit_time;
-
-        $dataFull = Traffic::where('id_user', $id)->
-        with(
-            'get_user:id,name,email',
-            'get_absents.get_absents_type:id,title',
-            'get_substitute',
-            'get_mission',
-            'get_day'
-        )->whereBetween('created_at',
-            [
-                $enter_time,
-                Carbon::now()
+                $startTrafficDate,
+                $endTrafficDate
             ])->get();
 
 
-
-        return $dataFull;
-
-
-
-
-
-
-
-
-//
-//
-
-
-        return $dataMonth;
-        $this->functional_description($dataMonth);
+        $this->functional_description($dataTraffic);
         $user = auth()->user();
         if (request('search')) {
             $user = User::where('name', 'like', '%' . request('search') . '%')->get();
@@ -128,19 +120,18 @@ class FunctionalDescriptionController extends Controller
             $totalShift = $toDate->diff($fromDate)->format('%Y:%M:%D %H:%I:%S');//tedad roz hay shift tain shode
             $days = $toDate->diffInDays($fromDate);
             for ($i = $countDay; $countDay < $days; $i++) {
-                $traffic_enter_time = $date->get_employee->get_shift_dailies[0]->watch_enter_time;
-                $traffic_exit_time = $date->get_employee->get_shift_dailies[0]->watch_exit_time;
-                $traffic_second_enter_time = $date->get_employee->get_shift_dailies[0]->watch_second_enter_time;
-                $traffic_second_exit_time = $date->get_employee->get_shift_dailies[0]->watch_second_exit_time;
+                $trafficEnterTime = $date->get_employee->get_shift_dailies[0]->watch_enter_time;
+                $trafficExitTime = $date->get_employee->get_shift_dailies[0]->watch_exit_time;
+                $trafficSecondEnterTime = $date->get_employee->get_shift_dailies[0]->watch_second_enter_time;
+                $trafficSecondExitTime = $date->get_employee->get_shift_dailies[0]->watch_second_exit_time;
 
-                $toDate = Carbon::parse($traffic_enter_time);
-                $fromDate = Carbon::parse($traffic_exit_time);
-                $toDateOne = Carbon::parse($traffic_second_enter_time);
-                $fromDateTwo = Carbon::parse($traffic_second_exit_time);
+                $toDate = Carbon::parse($trafficEnterTime);
+                $fromDate = Carbon::parse($trafficExitTime);
+                $toDateOne = Carbon::parse($trafficSecondEnterTime);
+                $fromDateTwo = Carbon::parse($trafficSecondExitTime);
 
                 $totalDateTraffic = $toDateOne->diffInHours($fromDateTwo);
                 $totalDateTrafficSecond = $toDate->diffInHours($fromDate);//in shift ha saate shifte rozane sabet hastatn///saate sabte taradod az roy saate shift
-
                 $fullTraffic += $totalDateTraffic + $totalDateTrafficSecond;
                 $countDay++;
             }
