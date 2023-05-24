@@ -19,6 +19,8 @@ use Exception;
 class FunctionalDescriptionController extends Controller
 {
     protected $arrayEmployee = [];
+    protected $shiftEmployees = [];
+
 
     public function show(Request $request, $id)
     {
@@ -30,132 +32,185 @@ class FunctionalDescriptionController extends Controller
         try {
             $startOfMonth = Carbon::create($now->year, $getMonth, 1, 0);
             $dataSortMonth = Traffic::where('id_user', $id)->
-            with('get_employee.get_shift_dailies')->whereBetween('created_at',
+            with('getEmployee.get_shift_dailies')->whereBetween('created_at',
                 [
                     $startOfMonth,
                     Carbon::now()->endOfMonth()
-                ])->get();
+                ])
+                ->get();
 
         } catch (Exception $error) {
             return response()->json($error, Response::HTTP_BAD_REQUEST);
         }
-
-        $startTrafficDate = Carbon::parse($dataSortMonth[0]->get_employee->shift_dailies_date_up);
-        $endTrafficDate = Carbon::parse($dataSortMonth[0]->get_employee->shift_dailies_date_at);
+        $startTrafficDate = Carbon::parse($dataSortMonth[0]->getEmployee->shift_dailies_date_up);
+        $endTrafficDate = Carbon::parse($dataSortMonth[0]->getEmployee->shift_dailies_date_at);
         $dataTraffic = Traffic::where('id_user', $id)->
         with(
-            'get_user:id,name,email',
             'get_absents.get_absents_type:id,title',
             'get_substitute',
             'get_mission',
             'get_day',
-            'get_employee.get_absents_default',
-            'get_employee.get_periodic_shift',
-            'get_employee.get_shift_dailies',
-            'get_employee.get_dedicated_shift',
-            'get_employee.get_days',
-            'get_employee.get_week_shift'
-        )->whereBetween('start_date',
-            [
-                $startTrafficDate,
-                $endTrafficDate
-            ])->get();
-
+            'getEmployee.get_absents_default',
+            'getEmployee.get_periodic_shift',
+            'getEmployee.get_shift_dailies',
+            'getEmployee.get_dedicated_shift',
+            'getEmployee.get_days',
+            'getEmployee.get_week_shift'
+        )->whereBetween('start_date', [
+            $startTrafficDate,
+            $endTrafficDate
+        ])->get();
 
         $this->functional_description($dataTraffic);
-        $user = auth()->user();
-        if (request('search')) {
-            $user = User::where('name', 'like', '%' . request('search') . '%')->get();
-        } else {
-            $user = User::all();
-        }
-
-        $shiftDailie = ShiftDailie::all();
-        $shiftPeriodic = PeriodicShift::all();
-        $shiftWeek = WeeklyShift::all();
-        $selectShift = Traffic::with('get_user')->get();
-        $employeesFormShift = ShiftEmployee::with('users:id,name,email', 'shiftWeek:id,title',
-            'shiftPeriodic:id,title', 'shiftDedicated:id,title', 'shiftDay:id,title')->get();
 
 
-        $traffic = Traffic::all();
-        return response()->json([
-            'traffic' => $traffic,
-            'user' => $user,
-            'shift_periodic' => $shiftPeriodic,
-            'shiftPeriodic' => $shiftPeriodic,
-            'shiftWeek' => $shiftWeek,
-            'shiftDailie' => $shiftDailie,
-            'employeesFormShift' => $employeesFormShift
 
-        ]);
+
     }
 
     public function functional_description($dataMonth)
     {
-        $today = Carbon::now();
-        $totalDuration = 0;
-        $totalDateTraffic = 0;
-        $functionShift = 0;
-        $totalShift = 0;
-        $days = 0;
-        $totalTrafficShift = 0;
-        $countDay = 0;
-        $totalDateTrafficOne = 0;
-        $totalDateTrafficSecond = 0;
-        $fullTraffic = 0;
+        $differentTime = 0;
+        $arrayData=["shiftEmployee"=>[
+            "courseStandard" => 0, "fullTrafficShift" => 0,
+            "totalEmployeeShift" => 0, "days" => 0, "countDay" => 0, "countTraffics" => 0],[]];
 
+        foreach ($dataMonth as $shiftEmployee) {
 
-        foreach ($dataMonth as $date) {
-            $traffic_enter_time = $date['enter_time'];
-            $traffic_exit_time = $date['exit_time'];
-            $toDate = Carbon::parse($traffic_enter_time);
-            $fromDate = Carbon::parse($traffic_exit_time);
-            $totalTrafficShift += $toDate->diffInHours($fromDate);///kole zaman sabte taradod
+            $arrayData=$this->getFullTrafficShift($arrayData,$shiftEmployee);
 
-            $shiftDailiesDateUp = $date->get_employee->shift_dailies_date_up;
-            $shiftDailiesDateAt = $date->get_employee->shift_dailies_date_at;
-            $toDate = Carbon::parse($shiftDailiesDateUp);
-            $fromDate = Carbon::parse($shiftDailiesDateAt);
-            $totalShift = $toDate->diff($fromDate)->format('%Y:%M:%D %H:%I:%S');//tedad roz hay shift tain shode
-            $days = $toDate->diffInDays($fromDate);
-            for ($i = $countDay; $countDay < $days; $i++) {
-                $trafficEnterTime = $date->get_employee->get_shift_dailies[0]->watch_enter_time;
-                $trafficExitTime = $date->get_employee->get_shift_dailies[0]->watch_exit_time;
-                $trafficSecondEnterTime = $date->get_employee->get_shift_dailies[0]->watch_second_enter_time;
-                $trafficSecondExitTime = $date->get_employee->get_shift_dailies[0]->watch_second_exit_time;
+            $arrayData=$this->getShiftEmployee($shiftEmployee,$arrayData);
 
-                $toDate = Carbon::parse($trafficEnterTime);
-                $fromDate = Carbon::parse($trafficExitTime);
-                $toDateOne = Carbon::parse($trafficSecondEnterTime);
-                $fromDateTwo = Carbon::parse($trafficSecondExitTime);
+            $arrayData=$this->getTotalEmployeeShift($shiftEmployee,$arrayData,$differentTime);
+//            dd($arrayData);
 
-                $totalDateTraffic = $toDateOne->diffInHours($fromDateTwo);
-                $totalDateTrafficSecond = $toDate->diffInHours($fromDate);//in shift ha saate shifte rozane sabet hastatn///saate sabte taradod az roy saate shift
-                $fullTraffic += $totalDateTraffic + $totalDateTrafficSecond;
-                $countDay++;
+            if( $arrayData["differentTrafficShift"]["fullTrafficShift"] < $arrayData['differentTrafficShift'] )
+            {
+                $differentTime = ($arrayData['totalEmployeeShift'] - $arrayData["differentTrafficShift"]["fullTrafficShift"]);
             }
-            $watchEnterTime = $date->get_employee->get_shift_dailies[0]->watch_enter_time;
-            $watchExitTime = $date->get_employee->get_shift_dailies[0]->watch_exit_time;
-            $to = Carbon::createFromFormat('H:s:i', $watchEnterTime);
-            $from = Carbon::createFromFormat('H:s:i', $watchExitTime);
-//                $totalDateSingleTraffic = $toDate->diff($fromDate)->format('%H:%I:%S');;
-            $totalDuration += ($to->diffInHours($from));///kole sate shifte rozone  ha az roy tarikh jostejo
 
+            $arrayData=$this->getCourseStandard($shiftEmployee,$arrayData,$differentTime);
+            $arrayData["shiftEmployee"]["countTraffics"]++;
 
         }
-        $this->arrayEmployee[] = [
-            'courseStandard' => $fullTraffic,
-            'totalTrafficShift' => $totalTrafficShift,
-            'totalShift' => $totalShift,
-            'Days' => $days,
-            'functionShift' => $functionShift
 
-        ];
 
-        dd($this->arrayEmployee);
+
+
+
+
+        $arrayData=$this->showShiftEmployees($arrayData);
+
+        dd($arrayData);
         return $dataMonth;
 
     }
+
+
+
+    public function getEmployee($dataEmployee,$differentTrafficShift){
+        $this->arrayEmployee=[
+            'differentTrafficShift'=>$differentTrafficShift,
+        ];
+
+        return $this->arrayEmployee;
+    }
+
+
+    public function getShiftEmployee($shiftEmployee,$arrayData)
+    {
+        $shiftDailiesEnterTime = Carbon::parse($shiftEmployee->getEmployee->get_shift_dailies[0]->watch_enter_time);
+        $shiftDailiesExitTime = Carbon::parse($shiftEmployee->getEmployee->get_shift_dailies[0]->watch_exit_time);
+        $shiftDailiesSecondEnterTime = Carbon::parse($shiftEmployee->getEmployee->get_shift_dailies[0]->watch_second_enter_time);
+        $shiftDailiesSecondExitTime = Carbon::parse($shiftEmployee->getEmployee->get_shift_dailies[0]->watch_second_exit_time);
+
+        $arrayData["shiftDailiesEnterTime"] = $shiftDailiesEnterTime;
+        $arrayData["shiftDailiesExitTime"] = $shiftDailiesExitTime;
+
+        $arrayData["shiftDailiesSecondEnterTime"] = $shiftDailiesSecondEnterTime;
+        $arrayData["shiftDailiesSecondExitTime"] = $shiftDailiesSecondExitTime;
+        if ($shiftDailiesEnterTime < $arrayData["shiftEmployee"]["trafficEnterTime"]) {
+            $toDate = Carbon::parse($arrayData["shiftEmployee"]["trafficExitTime"]);
+            $fromDate = Carbon::parse($arrayData["shiftEmployee"]["trafficExitTime"]);
+            $arrayData["fullTraffic"] = $arrayData["shiftEmployee"]["fullTrafficShift"] + $toDate->diffInHours($fromDate);
+        }
+        return $arrayData;
+
+    }
+
+
+
+    public function getFullTrafficShift($arrayData,$shiftEmployee)
+    {
+        $arrayData["shiftEmployee"]["trafficEnterTime"] = $shiftEmployee['enter_time'];
+        $arrayData["shiftEmployee"]["trafficExitTime"] = $shiftEmployee['exit_time'];
+        $toDate = Carbon::parse($arrayData["shiftEmployee"]["trafficEnterTime"]);
+        $fromDate = Carbon::parse($arrayData["shiftEmployee"]["trafficExitTime"]);
+        $differentTrafficShift['fullTrafficShift'] = $toDate->diffInHours($fromDate);
+        $arrayData["shiftEmployee"]["fullTrafficShift"] += $toDate->diffInHours($fromDate);
+        $arrayData["differentTrafficShift"] = $differentTrafficShift;
+
+        return $arrayData;
+
+    }
+    public function getTotalEmployeeShift($shiftEmployee,$arrayData,$differentTime)
+    {
+        $arrayData["shiftEmployee"]["watchEnterTime"] = $shiftEmployee->getEmployee->get_shift_dailies[0]->watch_enter_time;
+        $arrayData["shiftEmployee"]["watchExitTime"] = $shiftEmployee->getEmployee->get_shift_dailies[0]->watch_exit_time;
+        $arrayData["shiftEmployee"]["watchSecondEnterTime"] = $shiftEmployee->getEmployee->get_shift_dailies[0]->watch_second_enter_time;
+        $arrayData["shiftEmployee"]["watchSecondExitTime"] = $shiftEmployee->getEmployee->get_shift_dailies[0]->watch_second_exit_time;
+        $toDate = Carbon::parse($arrayData["shiftEmployee"]["watchEnterTime"]);
+        $fromDate = Carbon::parse($arrayData["shiftEmployee"]["watchExitTime"]);
+        $toDateSecond = Carbon::parse($arrayData["shiftEmployee"]["watchSecondEnterTime"]);
+        $fromDateSecond = Carbon::parse($arrayData["shiftEmployee"]["watchSecondExitTime"]);
+        $arrayData['totalEmployeeShift'] = ( ($toDate->diffInHours($fromDate)) + ($toDateSecond->diffInHours($fromDateSecond)) );
+
+        $arrayData["shiftEmployee"]['totalEmployeeShift'] += ( ($toDate->diffInHours($fromDate)) + ($toDateSecond->diffInHours($fromDateSecond)) ) - $differentTime;
+        return $arrayData;
+    }
+
+    public function getCourseStandard($shiftEmployee,$arrayData,$differentTime)
+    {
+
+        $shiftDailiesDateUp = $shiftEmployee->getEmployee->shift_dailies_date_up;
+        $shiftDailiesDateAt = $shiftEmployee->getEmployee->shift_dailies_date_at;
+
+        $toDate = Carbon::parse($shiftDailiesDateUp);
+        $fromDate = Carbon::parse($shiftDailiesDateAt);
+        $arrayData["shiftEmployee"]['totalShift'] = $toDate->diff($fromDate)->format('%D %H:%I:%S');//tedad roz hay shift tain shode
+        $arrayData["shiftEmployee"]['days'] = $toDate->diffInDays($fromDate);
+
+        for ($i = $arrayData["shiftEmployee"]["countDay"]; $arrayData["shiftEmployee"]["countDay"] < $arrayData["shiftEmployee"]["days"]; $i++) {
+            $arrayData["shiftEmployee"]["totalDateTraffic"] = $arrayData["shiftDailiesSecondEnterTime"]->diffInHours($arrayData["shiftDailiesSecondExitTime"]);
+            $totalDateTrafficSecond = $arrayData['shiftDailiesEnterTime']->diffInHours($arrayData["shiftDailiesExitTime"]);
+            $arrayData["shiftEmployee"]['courseStandard'] += $arrayData["shiftEmployee"]["totalDateTraffic"] + $totalDateTrafficSecond;
+            $arrayData["shiftEmployee"]["countDay"]++;
+
+        }
+        return $arrayData;
+
+    }
+
+
+    public function showShiftEmployees($arrayData)
+    {
+        $data=$this->shiftEmployees = [
+            'courseStandard'                => $arrayData["shiftEmployee"]['courseStandard'],
+            'totalEmployeeShift'            => $arrayData["shiftEmployee"]['totalEmployeeShift'],
+            'fullTraffic'                   => $arrayData["shiftEmployee"]["fullTrafficShift"],
+            'countTraffics'                 => $arrayData["shiftEmployee"]["countTraffics"],
+            'traffic_enter_time'            => $arrayData["shiftEmployee"]["trafficEnterTime"],
+            'traffic_exit_time'             => $arrayData["shiftEmployee"]["trafficExitTime"],
+            'watchShiftDailies-EnterTime'   => $arrayData["shiftEmployee"]["watchEnterTime"],
+            'watchShiftDailies-ExitTime'    => $arrayData["shiftEmployee"]["watchExitTime"],
+            'watchSecondEnterTime'          => $arrayData["shiftEmployee"]["watchSecondEnterTime"],
+            'watchSecondExitTime'           => $arrayData["shiftEmployee"]["watchSecondExitTime"],
+            'totalShift'                    => $arrayData["shiftEmployee"]["totalShift"],
+            'Days'                          => $arrayData["shiftEmployee"]['days'],
+
+        ];
+        return $data;
+    }
+
 
 }

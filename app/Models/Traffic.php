@@ -39,9 +39,13 @@ class Traffic extends Model
         return $this->hasOne(DayWeek::class, 'id', 'id_day');
     }
 
-    public function get_employee()
+    public function getEmployee()
     {
-        return $this->hasOne(ShiftEmployee::class, 'id', 'id_shift');
+        return $this->hasOne(ShiftEmployee::class, 'id', 'id_shift')
+            ->selectRaw('shift_employees.*, TIMESTAMPDIFF(hour, shift_dailies_date_up, shift_dailies_date_at) as different_shift_dailies')
+            ->selectRaw('shift_employees.*, TIMESTAMPDIFF(hour, periodic_shifts_date_up, periodic_shifts_date_at) as different_periodic_shifts')
+            ->selectRaw('shift_employees.*, TIMESTAMPDIFF(hour, week_shifts_date_up, week_shifts_date_at) as different_week_shifts')
+            ->selectRaw('shift_employees.*, TIMESTAMPDIFF(hour, dedicated_shifts_date_up, dedicated_shifts_date_at) as different_dedicated_shifts');
     }
 
 

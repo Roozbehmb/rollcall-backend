@@ -67,6 +67,7 @@ class ShiftEmployeeController extends Controller
         try {
             $employeesFormShiftRequest = $request->all();
             $data = ShiftEmployee::find($id);
+
             $data->update($employeesFormShiftRequest);
             $employeesFormShift = ShiftEmployee::with('users:id,name,email', 'shiftWeek:id,title',
                 'shiftPeriodic:id,title',

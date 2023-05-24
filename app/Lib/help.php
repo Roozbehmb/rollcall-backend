@@ -174,3 +174,4 @@ $mult_traffic->up_to_date = $data_up;
 <!---->
 <!--if ($checkShiftDailies || $checkShiftWeeks || $checkShiftPeriodic) {-->
 //            ///    $totalDateSingleTraffic = $toDate->diff($fromDate)->format('%H:%I:%S');;
+//                $totalDateSingleTraffic = $toDate->diff($fromDate)->format('%H:%I:%S');;
